@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2004-2016 The YAWL Foundation. All rights reserved.
+  ~ The YAWL Foundation is a collaboration of individuals and
+  ~ organisations who are committed to improving workflow technology.
+  ~
+  ~ This file is part of YAWL. YAWL is free software: you can
+  ~ redistribute it and/or modify it under the terms of the GNU Lesser
+  ~ General Public License as published by the Free Software Foundation.
+  ~
+  ~ YAWL is distributed in the hope that it will be useful, but WITHOUT
+  ~ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
+  ~ Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with YAWL. If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:worklet="http://www.yawlfoundation.org/yawlschema"
+           targetNamespace="http://www.yawlfoundation.org/yawlschema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified"
+           version="4.0">
+
+    <!--the root level element can be called 'spec' or 'process'-->
+    <xs:element name="spec" type="worklet:specType"/>
+    <xs:element name="process" type="worklet:processType"/>
+
+    <!--first-level children of spec element-->
+    <xs:complexType name="specType">
+        <xs:all>
+            <xs:element name="abort" type="worklet:taskListType"  minOccurs="0"/>
+            <xs:element name="constraints" type="worklet:constraintsType" minOccurs="0"/>
+            <xs:element name="external" type="worklet:externalType" minOccurs="0"/>
+            <xs:element name="resourceUnavailable" type="worklet:taskListType" minOccurs="0"/>
+            <xs:element name="selection" type="worklet:taskListType" minOccurs="0"/>
+            <xs:element name="timeout" type="worklet:taskListType" minOccurs="0"/>
+            <xs:element name="violation" type="worklet:taskListType" minOccurs="0"/>
+        </xs:all>
+        <xs:attribute name="identifier" use="required"/>
+        <xs:attribute name="uri" use="required" type="xs:NCName"/>
+        <xs:attribute name="version" use="required" type="xs:decimal"/>
+    </xs:complexType>
+
+    <!--first-level children of process element-->
+    <xs:complexType name="processType">
+        <xs:all>
+            <xs:element name="abort" type="worklet:taskListType"  minOccurs="0"/>
+            <xs:element name="constraints" type="worklet:constraintsType" minOccurs="0"/>
+            <xs:element name="external" type="worklet:externalType" minOccurs="0"/>
+            <xs:element name="resourceUnavailable" type="worklet:taskListType" minOccurs="0"/>
+            <xs:element name="selection" type="worklet:taskListType" minOccurs="0"/>
+            <xs:element name="timeout" type="worklet:taskListType" minOccurs="0"/>
+            <xs:element name="violation" type="worklet:taskListType" minOccurs="0"/>
+        </xs:all>
+        <xs:attribute name="name" use="required"/>
+    </xs:complexType>
+
+    <!-- a case level tree may have a single task parent OR a number of rule nodes -->
+    <xs:complexType name="caseType">
+        <xs:choice>
+            <xs:element name="task" type="worklet:taskType"/>
+            <xs:element name="ruleNode" type="worklet:ruleNodeType" maxOccurs="unbounded" />
+        </xs:choice>
+    </xs:complexType>
+
+    <!--a list of tasks for a related rule-->
+    <xs:complexType name="taskListType">
+        <xs:sequence>
+            <xs:element name="task" maxOccurs="unbounded" type="worklet:taskType">
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--a task element-->
+    <xs:complexType name="taskType">
+        <xs:sequence>
+            <xs:element name="ruleNode" type="worklet:ruleNodeType" maxOccurs="unbounded" />
+        </xs:sequence>
+      	<xs:attribute name="name" type="xs:string" use="required"/>
+	</xs:complexType>
+
+    <!--allowable conclusion actions-->
+    <xs:simpleType name="actionType">
+   		<xs:restriction base="xs:string">
+   			<xs:enumeration value="continue"/>
+   			<xs:enumeration value="suspend"/>
+            <xs:enumeration value="remove"/>
+            <xs:enumeration value="restart"/>
+            <xs:enumeration value="complete"/>
+            <xs:enumeration value="fail"/>
+            <xs:enumeration value="compensate"/>
+            <xs:enumeration value="rollback"/>
+            <xs:enumeration value="select"/>
+   		</xs:restriction>
+   	</xs:simpleType>
+
+    <!--one node's reference to another node in a parent-child relation-->
+    <xs:simpleType name="nodeReferenceType">
+   		<xs:restriction base="xs:integer">
+   			<xs:minInclusive value="-1"/>
+   		</xs:restriction>
+   	</xs:simpleType>
+
+    <!--a conclusion is a sequence of one or more 'steps' or exlet primitives-->
+    <xs:complexType name="conclusionType">
+        <xs:sequence>
+            <xs:element name="step" type="worklet:conclusionStepType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--each 'step' represents an exlet primitive-->
+    <xs:complexType name="conclusionStepType">
+		<xs:sequence>
+			<xs:element name="action" type="worklet:actionType"/>
+			<xs:element name="target" type="xs:string"/>
+		</xs:sequence>
+        <xs:attribute name="index" type="xs:positiveInteger" use="required"/>
+	</xs:complexType>
+
+    <!--there may be case level and/or item level constraints-->
+    <xs:complexType name="constraintsType">
+        <xs:sequence>
+            <xs:element name="case" type="worklet:caseConstraintsType" minOccurs="0"/>
+            <xs:element name="item" type="worklet:itemConstraintType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--a list of pre or post constraint item-level rule trees-->
+    <xs:complexType name="itemConstraintType">
+        <xs:sequence>
+            <xs:element name="pre" minOccurs="0" type="worklet:taskListType"/>
+            <xs:element name="post" minOccurs="0" type="worklet:taskListType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--a list of pre or post constraint case-level rule trees-->
+    <xs:complexType name="caseConstraintsType">
+        <xs:sequence>
+            <xs:element name="pre" minOccurs="0" type="worklet:caseType"/>
+            <xs:element name="post" minOccurs="0" type="worklet:caseType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--there may be case level and/or item level external triggers-->
+    <xs:complexType name="externalType">
+        <xs:sequence>
+            <xs:element name="case" minOccurs="0" type="worklet:caseType"/>
+            <xs:element name="item" minOccurs="0" type="worklet:taskListType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--one node in a rule tree-->
+    <xs:complexType name="ruleNodeType">
+        <xs:sequence>
+            <xs:element name="id" type="xs:nonNegativeInteger"/>
+            <xs:element name="parent" type="worklet:nodeReferenceType"/>
+            <xs:element name="trueChild" type="worklet:nodeReferenceType"/>
+            <xs:element name="falseChild" type="worklet:nodeReferenceType"/>
+            <xs:element name="condition" type="xs:string"/>
+            <xs:element name="conclusion" type="worklet:conclusionType"/>
+            <xs:element name="cornerstone" type="worklet:cornerstoneType"/>
+            <xs:element name="description" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- cornerstone data may have any number of elements in any format -->
+    <xs:complexType  name="cornerstoneType">
+        <xs:sequence minOccurs="0">
+            <xs:any processContents="skip" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
